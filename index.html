@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Manager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f8f8f6;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.13);
+    --text: #111111;
+    --text2: #666660;
+    --text3: #999994;
+    --dark: #0a0a0a;
+    --green: #28c840;
+    --green-bg: rgba(40,200,64,0.12);
+    --green-border: rgba(40,200,64,0.25);
+    --blue: #378add;
+    --yellow: #febc2e;
+    --red: #ff5f57;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .wrapper { width: 100%; max-width: 960px; }
+
+  /* ── TOP LABEL ── */
+  .top-label {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .top-label span {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--text3); letter-spacing: 0.06em;
+  }
+  .top-label-line { flex: 1; height: 0.5px; background: var(--border2); }
+
+  /* ── APP SHELL ── */
+  .app {
+    background: var(--surface);
+    border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    overflow: hidden;
+    box-shadow: 0 2px 40px rgba(0,0,0,0.08);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: #0a0a0a;
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .topbar-title { font-family: 'DM Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.4); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .tb-badge {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: #28c840; background: rgba(40,200,64,0.12);
+    border: 0.5px solid rgba(40,200,64,0.25);
+    border-radius: 100px; padding: 3px 10px;
+  }
+  .tb-tab {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 4px 12px; cursor: pointer;
+    transition: all 0.13s;
+  }
+  .tb-tab:hover { color: rgba(255,255,255,0.7); }
+  .tb-tab.active { color: #fff; background: rgba(255,255,255,0.12); }
+
+  /* ── BODY ── */
+  .body { display: flex; min-height: 560px; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 210px; flex-shrink: 0;
+    background: #111;
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .sb-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: rgba(255,255,255,0.22); letter-spacing: 0.1em;
+    padding: 0 10px; margin: 12px 0 6px;
+  }
+  .sb-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.38);
+    border: 0.5px solid transparent;
+    transition: all 0.14s;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.05); }
+  .nav-item.active { color: #fff; background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.1); }
+  .nav-item i { font-size: 16px; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; margin-left: auto; flex-shrink: 0; }
+
+  .sb-files { margin-top: auto; padding-top: 14px; border-top: 0.5px solid rgba(255,255,255,0.06); }
+  .file-chip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 10px; border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: rgba(255,255,255,0.32); cursor: pointer; transition: all 0.1s;
+  }
+  .file-chip:hover { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.04); }
+  .file-chip i { font-size: 12px; }
+  .no-files { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.18); padding: 6px 10px; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; }
+
+  /* UI PANEL */
+  .ui-panel { flex: 1; display: flex; flex-direction: column; }
+  .main-header {
+    padding: 22px 28px 18px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .op-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .op-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .op-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .main-body { flex: 1; padding: 22px 28px; }
+
+  .field-row { margin-bottom: 16px; }
+  .field-label {
+    display: block; font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.07em;
+    color: var(--text2); margin-bottom: 6px;
+  }
+  .field-input, .field-textarea {
+    width: 100%; background: var(--surface2);
+    border: 0.5px solid var(--border2); border-radius: 10px;
+    padding: 10px 14px; font-family: 'DM Mono', monospace;
+    font-size: 13px; color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  .field-input:focus, .field-textarea:focus { border-color: rgba(0,0,0,0.3); }
+  .field-textarea { min-height: 80px; resize: vertical; }
+
+  .seg-group { display: flex; gap: 6px; margin-bottom: 16px; }
+  .seg-btn {
+    flex: 1; padding: 8px 10px;
+    background: var(--surface2); border: 0.5px solid var(--border);
+    border-radius: 8px; font-size: 12px; font-weight: 500;
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: all 0.12s;
+  }
+  .seg-btn:hover { border-color: var(--border2); color: var(--text); }
+  .seg-btn.active { background: #0a0a0a; border-color: #0a0a0a; color: #fff; }
+  .seg-btn i { font-size: 13px; }
+
+  .run-btn {
+    width: 100%; padding: 12px;
+    background: #0a0a0a; border: none; border-radius: 10px;
+    color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s; margin-top: 4px;
+  }
+  .run-btn:hover { opacity: 0.82; }
+
+  .output-area {
+    margin-top: 14px; background: #0a0a0a;
+    border-radius: 12px; padding: 13px 16px; min-height: 58px;
+  }
+  .out-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .out-tag { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.08em; }
+  .out-badge { font-family: 'DM Mono', monospace; font-size: 10px; border-radius: 100px; padding: 2px 8px; }
+  .b-idle { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.28); }
+  .b-ok { background: rgba(40,200,64,0.15); color: #28c840; }
+  .b-err { background: rgba(255,95,87,0.15); color: #ff5f57; }
+  .b-warn { background: rgba(254,188,46,0.15); color: #febc2e; }
+  .out-text { font-family: 'DM Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.4); white-space: pre-wrap; line-height: 1.6; }
+  .out-text.ok { color: #28c840; }
+  .out-text.err { color: #ff5f57; }
+  .out-text.warn { color: #febc2e; }
+
+  /* CODE PANEL */
+  .code-panel { display: none; flex-direction: column; }
+  .code-panel.visible { display: flex; }
+  .code-header {
+    padding: 14px 20px;
+    background: #0f0f0f;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .code-filename { font-family: 'DM Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.4); }
+  .copy-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 5px 10px; cursor: pointer;
+    transition: all 0.13s;
+  }
+  .copy-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+  .copy-btn i { font-size: 13px; }
+  .code-body {
+    flex: 1; background: #0d0d0d;
+    padding: 20px 24px; overflow-y: auto;
+    max-height: 520px;
+  }
+  pre { font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.75; }
+
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .st { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .bl { color: #89ddff; }
+  .nm { color: #f78c6c; }
+  .pl { color: #fff; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="top-label">
+    <div class="top-label-line"></div>
+    <span>file_manager.py · Python 3 · pathlib</span>
+    <div class="top-label-line"></div>
+  </div>
+
+  <div class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="dots">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+        </div>
+        <span class="topbar-title">file_manager.py</span>
+      </div>
+      <div class="topbar-right">
+        <span class="tb-badge">● running</span>
+        <span class="tb-tab active" onclick="switchTab('ui', this)">UI Demo</span>
+        <span class="tb-tab" onclick="switchTab('code', this)">Source Code</span>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="sidebar">
+        <div class="sb-label">operations</div>
+        <div class="nav-item active" onclick="selectOp('create')" id="nav-create">
+          <i class="ti ti-file-plus"></i> Create
+          <span class="nav-dot" style="background:#28c840"></span>
+        </div>
+        <div class="nav-item" onclick="selectOp('read')" id="nav-read">
+          <i class="ti ti-file-text"></i> Read
+          <span class="nav-dot" style="background:#378add"></span>
+        </div>
+        <div class="nav-item" onclick="selectOp('update')" id="nav-update">
+          <i class="ti ti-file-pencil"></i> Update
+          <span class="nav-dot" style="background:#febc2e"></span>
+        </div>
+        <div class="nav-item" onclick="selectOp('delete')" id="nav-delete">
+          <i class="ti ti-file-minus"></i> Delete
+          <span class="nav-dot" style="background:#ff5f57"></span>
+        </div>
+
+        <div class="sb-files">
+          <div class="sb-label" style="margin-top:0">filesystem</div>
+          <div id="file-list"><div class="no-files">empty</div></div>
+        </div>
+      </div>
+
+      <div class="main">
+
+        <!-- UI PANEL -->
+        <div class="ui-panel" id="ui-panel">
+          <div class="main-header">
+            <div class="header-row">
+              <div>
+                <div class="op-title" id="op-title">Create file</div>
+                <div class="op-sub" id="op-sub">Write a new file to the filesystem</div>
+              </div>
+              <div class="op-icon" id="op-icon" style="background:#e9fdf0; color:#16a34a">
+                <i class="ti ti-file-plus" id="op-icon-i"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-body">
+
+            <div id="panel-create">
+              <div class="field-row">
+                <label class="field-label">file_name</label>
+                <input class="field-input" id="c-name" placeholder="notes.txt" type="text">
+              </div>
+              <div class="field-row">
+                <label class="field-label">content</label>
+                <textarea class="field-textarea" id="c-content" placeholder="Write something..."></textarea>
+              </div>
+            </div>
+
+            <div id="panel-read" class="hidden">
+              <div class="field-row">
+                <label class="field-label">file_name</label>
+                <input class="field-input" id="r-name" placeholder="notes.txt" type="text">
+              </div>
+            </div>
+
+            <div id="panel-update" class="hidden">
+              <div class="field-row">
+                <label class="field-label">file_name</label>
+                <input class="field-input" id="u-name" placeholder="notes.txt" type="text">
+              </div>
+              <div class="seg-group">
+                <button class="seg-btn active" onclick="selectSub('rename')" id="sub-rename"><i class="ti ti-cursor-text"></i>Rename</button>
+                <button class="seg-btn" onclick="selectSub('append')" id="sub-append"><i class="ti ti-plus"></i>Append</button>
+                <button class="seg-btn" onclick="selectSub('overwrite')" id="sub-overwrite"><i class="ti ti-refresh"></i>Overwrite</button>
+              </div>
+              <div id="sf-rename" class="field-row">
+                <label class="field-label">new_name</label>
+                <input class="field-input" id="u-newname" placeholder="renamed.txt" type="text">
+              </div>
+              <div id="sf-append" class="field-row hidden">
+                <label class="field-label">append_content</label>
+                <textarea class="field-textarea" id="u-append" placeholder="Additional content..."></textarea>
+              </div>
+              <div id="sf-overwrite" class="field-row hidden">
+                <label class="field-label">new_content</label>
+                <textarea class="field-textarea" id="u-over" placeholder="Replacement content..."></textarea>
+              </div>
+            </div>
+
+            <div id="panel-delete" class="hidden">
+              <div class="field-row">
+                <label class="field-label">file_name</label>
+                <input class="field-input" id="d-name" placeholder="notes.txt" type="text">
+              </div>
+            </div>
+
+            <button class="run-btn" onclick="runOp()">
+              <i class="ti ti-player-play"></i>
+              <span id="run-label">Run create()</span>
+            </button>
+
+            <div class="output-area">
+              <div class="out-bar">
+                <span class="out-tag">OUTPUT</span>
+                <span class="out-badge b-idle" id="out-status">idle</span>
+              </div>
+              <div class="out-text" id="out-text">Awaiting operation...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CODE PANEL -->
+        <div class="code-panel" id="code-panel">
+          <div class="code-header">
+            <span class="code-filename">file_manager.py</span>
+            <button class="copy-btn" onclick="copyCode()"><i class="ti ti-copy"></i><span id="copy-label">Copy code</span></button>
+          </div>
+          <div class="code-body">
+            <pre id="code-block"><span class="kw">from</span> <span class="fn">pathlib</span> <span class="kw">import</span> <span class="fn">Path</span>
+
+<span class="kw">def</span> <span class="fn">createfile</span><span class="pl">():</span>
+    <span class="kw">try</span><span class="pl">:</span>
+        <span class="pl">name</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"Please tell your file name: "</span><span class="pl">)</span>
+        <span class="pl">path</span> <span class="bl">=</span> <span class="fn">Path</span><span class="pl">(name)</span>
+        <span class="kw">if not</span> <span class="pl">path</span><span class="bl">.</span><span class="fn">exists</span><span class="pl">():</span>
+            <span class="kw">with</span> <span class="fn">open</span><span class="pl">(path,</span> <span class="st">"w"</span><span class="pl">)</span> <span class="kw">as</span> <span class="pl">fs:</span>
+                <span class="pl">data</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"What do you want to write: "</span><span class="pl">)</span>
+                <span class="pl">fs</span><span class="bl">.</span><span class="fn">write</span><span class="pl">(data)</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"File created successfully"</span><span class="pl">)</span>
+        <span class="kw">else</span><span class="pl">:</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"File already exists"</span><span class="pl">)</span>
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="pl">err:</span>
+        <span class="fn">print</span><span class="pl">(</span><span class="st">"An error occurred:"</span><span class="pl">, err)</span>
+
+<span class="kw">def</span> <span class="fn">readfile</span><span class="pl">():</span>
+    <span class="kw">try</span><span class="pl">:</span>
+        <span class="pl">name</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"Please tell your file name: "</span><span class="pl">)</span>
+        <span class="pl">path</span> <span class="bl">=</span> <span class="fn">Path</span><span class="pl">(name)</span>
+        <span class="kw">if</span> <span class="pl">path</span><span class="bl">.</span><span class="fn">exists</span><span class="pl">():</span>
+            <span class="kw">with</span> <span class="fn">open</span><span class="pl">(path,</span> <span class="st">"r"</span><span class="pl">)</span> <span class="kw">as</span> <span class="pl">fs:</span>
+                <span class="pl">content</span> <span class="bl">=</span> <span class="pl">fs</span><span class="bl">.</span><span class="fn">read</span><span class="pl">()</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"\nFile Content:"</span><span class="pl">)</span>
+            <span class="fn">print</span><span class="pl">(content)</span>
+        <span class="kw">else</span><span class="pl">:</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"Error: No such file exists"</span><span class="pl">)</span>
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="pl">err:</span>
+        <span class="fn">print</span><span class="pl">(</span><span class="st">"An error occurred:"</span><span class="pl">, err)</span>
+
+<span class="kw">def</span> <span class="fn">updatefile</span><span class="pl">():</span>
+    <span class="kw">try</span><span class="pl">:</span>
+        <span class="pl">name</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"Please tell your file name: "</span><span class="pl">)</span>
+        <span class="pl">path</span> <span class="bl">=</span> <span class="fn">Path</span><span class="pl">(name)</span>
+        <span class="kw">if</span> <span class="pl">path</span><span class="bl">.</span><span class="fn">exists</span><span class="pl">():</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"\nOperations:"</span><span class="pl">)</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"1. Rename the file"</span><span class="pl">)</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"2. Append content"</span><span class="pl">)</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"3. Overwrite the file"</span><span class="pl">)</span>
+            <span class="pl">choice</span> <span class="bl">=</span> <span class="fn">int</span><span class="pl">(</span><span class="fn">input</span><span class="pl">(</span><span class="st">"Enter your option: "</span><span class="pl">))</span>
+            <span class="kw">if</span> <span class="pl">choice</span> <span class="bl">==</span> <span class="nm">1</span><span class="pl">:</span>
+                <span class="pl">newname</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"Enter new file name: "</span><span class="pl">)</span>
+                <span class="pl">new_path</span> <span class="bl">=</span> <span class="fn">Path</span><span class="pl">(newname)</span>
+                <span class="kw">if not</span> <span class="pl">new_path</span><span class="bl">.</span><span class="fn">exists</span><span class="pl">():</span>
+                    <span class="pl">path</span><span class="bl">.</span><span class="fn">rename</span><span class="pl">(new_path)</span>
+                    <span class="fn">print</span><span class="pl">(</span><span class="st">"File renamed successfully"</span><span class="pl">)</span>
+                <span class="kw">else</span><span class="pl">:</span>
+                    <span class="fn">print</span><span class="pl">(</span><span class="st">"A file with that name already exists"</span><span class="pl">)</span>
+            <span class="kw">elif</span> <span class="pl">choice</span> <span class="bl">==</span> <span class="nm">2</span><span class="pl">:</span>
+                <span class="kw">with</span> <span class="fn">open</span><span class="pl">(path,</span> <span class="st">"a"</span><span class="pl">)</span> <span class="kw">as</span> <span class="pl">fs:</span>
+                    <span class="pl">data</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"What do you want to append: "</span><span class="pl">)</span>
+                    <span class="pl">fs</span><span class="bl">.</span><span class="fn">write</span><span class="pl">(</span><span class="st">"\n"</span> <span class="bl">+</span> <span class="pl">data)</span>
+                <span class="fn">print</span><span class="pl">(</span><span class="st">"Content appended successfully"</span><span class="pl">)</span>
+            <span class="kw">elif</span> <span class="pl">choice</span> <span class="bl">==</span> <span class="nm">3</span><span class="pl">:</span>
+                <span class="kw">with</span> <span class="fn">open</span><span class="pl">(path,</span> <span class="st">"w"</span><span class="pl">)</span> <span class="kw">as</span> <span class="pl">fs:</span>
+                    <span class="pl">data</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"What do you want to overwrite with: "</span><span class="pl">)</span>
+                    <span class="pl">fs</span><span class="bl">.</span><span class="fn">write</span><span class="pl">(data)</span>
+                <span class="fn">print</span><span class="pl">(</span><span class="st">"File overwritten successfully"</span><span class="pl">)</span>
+            <span class="kw">else</span><span class="pl">:</span>
+                <span class="fn">print</span><span class="pl">(</span><span class="st">"Invalid option"</span><span class="pl">)</span>
+        <span class="kw">else</span><span class="pl">:</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"Error: No such file exists"</span><span class="pl">)</span>
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="pl">err:</span>
+        <span class="fn">print</span><span class="pl">(</span><span class="st">"An error occurred:"</span><span class="pl">, err)</span>
+
+<span class="kw">def</span> <span class="fn">deletefile</span><span class="pl">():</span>
+    <span class="kw">try</span><span class="pl">:</span>
+        <span class="pl">name</span> <span class="bl">=</span> <span class="fn">input</span><span class="pl">(</span><span class="st">"Please tell your file name: "</span><span class="pl">)</span>
+        <span class="pl">path</span> <span class="bl">=</span> <span class="fn">Path</span><span class="pl">(name)</span>
+        <span class="kw">if</span> <span class="pl">path</span><span class="bl">.</span><span class="fn">exists</span><span class="pl">():</span>
+            <span class="pl">path</span><span class="bl">.</span><span class="fn">unlink</span><span class="pl">()</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"File deleted successfully"</span><span class="pl">)</span>
+        <span class="kw">else</span><span class="pl">:</span>
+            <span class="fn">print</span><span class="pl">(</span><span class="st">"Error: No such file exists"</span><span class="pl">)</span>
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="pl">err:</span>
+        <span class="fn">print</span><span class="pl">(</span><span class="st">"An error occurred:"</span><span class="pl">, err)</span>
+
+<span class="fn">print</span><span class="pl">(</span><span class="st">"\n===== FILE MANAGER ====="</span><span class="pl">)</span>
+<span class="fn">print</span><span class="pl">(</span><span class="st">"1. Create a file"</span><span class="pl">)</span>
+<span class="fn">print</span><span class="pl">(</span><span class="st">"2. Read a file"</span><span class="pl">)</span>
+<span class="fn">print</span><span class="pl">(</span><span class="st">"3. Update a file"</span><span class="pl">)</span>
+<span class="fn">print</span><span class="pl">(</span><span class="st">"4. Delete a file"</span><span class="pl">)</span>
+
+<span class="pl">a</span> <span class="bl">=</span> <span class="fn">int</span><span class="pl">(</span><span class="fn">input</span><span class="pl">(</span><span class="st">"\nEnter your choice: "</span><span class="pl">))</span>
+
+<span class="kw">if</span> <span class="pl">a</span> <span class="bl">==</span> <span class="nm">1</span><span class="pl">:</span>
+    <span class="fn">createfile</span><span class="pl">()</span>
+<span class="kw">elif</span> <span class="pl">a</span> <span class="bl">==</span> <span class="nm">2</span><span class="pl">:</span>
+    <span class="fn">readfile</span><span class="pl">()</span>
+<span class="kw">elif</span> <span class="pl">a</span> <span class="bl">==</span> <span class="nm">3</span><span class="pl">:</span>
+    <span class="fn">updatefile</span><span class="pl">()</span>
+<span class="kw">elif</span> <span class="pl">a</span> <span class="bl">==</span> <span class="nm">4</span><span class="pl">:</span>
+    <span class="fn">deletefile</span><span class="pl">()</span>
+<span class="kw">else</span><span class="pl">:</span>
+    <span class="fn">print</span><span class="pl">(</span><span class="st">"Invalid choice"</span><span class="pl">)</span></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const vfs = {};
+let op = 'create', sub = 'rename';
+
+const ops = {
+  create: { title:'Create file', sub:'Write a new file to the filesystem', icon:'ti-file-plus', bg:'#e9fdf0', col:'#16a34a', fn:'create()' },
+  read:   { title:'Read file',   sub:'View the contents of a file',         icon:'ti-file-text', bg:'#dbeafe', col:'#1d4ed8', fn:'read()' },
+  update: { title:'Update file', sub:'Rename, append, or overwrite a file', icon:'ti-file-pencil', bg:'#fefce8', col:'#a16207', fn:'update()' },
+  delete: { title:'Delete file', sub:'Permanently remove a file',           icon:'ti-file-minus', bg:'#fee2e2', col:'#dc2626', fn:'delete()' },
+};
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tb-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ui-panel').style.display = tab === 'ui' ? 'flex' : 'none';
+  const cp = document.getElementById('code-panel');
+  cp.style.display = tab === 'code' ? 'flex' : 'none';
+}
+
+function selectOp(o) {
+  op = o;
+  ['create','read','update','delete'].forEach(x => {
+    document.getElementById('nav-' + x).classList.toggle('active', x === o);
+    document.getElementById('panel-' + x).classList.toggle('hidden', x !== o);
+  });
+  const cfg = ops[o];
+  document.getElementById('op-title').textContent = cfg.title;
+  document.getElementById('op-sub').textContent = cfg.sub;
+  document.getElementById('op-icon-i').className = 'ti ' + cfg.icon;
+  const ic = document.getElementById('op-icon');
+  ic.style.background = cfg.bg; ic.style.color = cfg.col;
+  document.getElementById('run-label').textContent = 'Run ' + cfg.fn;
+  setOut('idle','b-idle','Awaiting operation...');
+}
+
+function selectSub(s) {
+  sub = s;
+  ['rename','append','overwrite'].forEach(x => {
+    document.getElementById('sub-' + x).classList.toggle('active', x === s);
+    document.getElementById('sf-' + x).classList.toggle('hidden', x !== s);
+  });
+}
+
+function setOut(st, cls, msg, tcls) {
+  document.getElementById('out-status').textContent = st;
+  document.getElementById('out-status').className = 'out-badge ' + cls;
+  const t = document.getElementById('out-text');
+  t.textContent = msg; t.className = 'out-text ' + (tcls||'');
+}
+
+function v(id) { return (document.getElementById(id)||{}).value?.trim()||''; }
+
+function refreshFiles() {
+  const list = document.getElementById('file-list');
+  const keys = Object.keys(vfs);
+  if (!keys.length) { list.innerHTML = '<div class="no-files">empty</div>'; return; }
+  list.innerHTML = keys.map(k => `<div class="file-chip"><i class="ti ti-file"></i>${k}</div>`).join('');
+}
+
+function runOp() {
+  if (op === 'create') {
+    const n = v('c-name'), c = v('c-content');
+    if (!n) { setOut('error','b-err','Error: file name required.','err'); return; }
+    if (vfs[n] !== undefined) { setOut('warn','b-warn','File already exists','warn'); return; }
+    vfs[n] = c;
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-content').value = '';
+    setOut('success','b-ok','File created successfully','ok');
+  } else if (op === 'read') {
+    const n = v('r-name');
+    if (!n) { setOut('error','b-err','Error: file name required.','err'); return; }
+    if (vfs[n] === undefined) { setOut('error','b-err','Error: No such file exists','err'); return; }
+    setOut('success','b-ok','File Content:\n' + (vfs[n]||'(empty)'),'ok');
+  } else if (op === 'update') {
+    const n = v('u-name');
+    if (!n) { setOut('error','b-err','Error: file name required.','err'); return; }
+    if (vfs[n] === undefined) { setOut('error','b-err','Error: No such file exists','err'); return; }
+    if (sub === 'rename') {
+      const nn = v('u-newname');
+      if (!nn) { setOut('error','b-err','Error: new name required.','err'); return; }
+      if (vfs[nn] !== undefined) { setOut('warn','b-warn','A file with that name already exists','warn'); return; }
+      vfs[nn] = vfs[n]; delete vfs[n];
+      document.getElementById('u-name').value = '';
+      document.getElementById('u-newname').value = '';
+      setOut('success','b-ok','File renamed successfully','ok');
+    } else if (sub === 'append') {
+      vfs[n] = vfs[n] + '\n' + v('u-append');
+      document.getElementById('u-append').value = '';
+      setOut('success','b-ok','Content appended successfully','ok');
+    } else {
+      vfs[n] = v('u-over');
+      document.getElementById('u-over').value = '';
+      setOut('success','b-ok','File overwritten successfully','ok');
+    }
+  } else if (op === 'delete') {
+    const n = v('d-name');
+    if (!n) { setOut('error','b-err','Error: file name required.','err'); return; }
+    if (vfs[n] === undefined) { setOut('error','b-err','Error: No such file exists','err'); return; }
+    delete vfs[n];
+    document.getElementById('d-name').value = '';
+    setOut('success','b-ok','File deleted successfully','ok');
+  }
+  refreshFiles();
+}
+
+function copyCode() {
+  const raw = `from pathlib import Path
+
+def createfile():
+    try:
+        name = input("Please tell your file name: ")
+        path = Path(name)
+        if not path.exists():
+            with open(path, "w") as fs:
+                data = input("What do you want to write: ")
+                fs.write(data)
+            print("File created successfully")
+        else:
+            print("File already exists")
+    except Exception as err:
+        print("An error occurred:", err)
+
+def readfile():
+    try:
+        name = input("Please tell your file name: ")
+        path = Path(name)
+        if path.exists():
+            with open(path, "r") as fs:
+                content = fs.read()
+            print("\\nFile Content:")
+            print(content)
+        else:
+            print("Error: No such file exists")
+    except Exception as err:
+        print("An error occurred:", err)
+
+def updatefile():
+    try:
+        name = input("Please tell your file name: ")
+        path = Path(name)
+        if path.exists():
+            print("\\nOperations:")
+            print("1. Rename the file")
+            print("2. Append content")
+            print("3. Overwrite the file")
+            choice = int(input("Enter your option: "))
+            if choice == 1:
+                newname = input("Enter new file name: ")
+                new_path = Path(newname)
+                if not new_path.exists():
+                    path.rename(new_path)
+                    print("File renamed successfully")
+                else:
+                    print("A file with that name already exists")
+            elif choice == 2:
+                with open(path, "a") as fs:
+                    data = input("What do you want to append: ")
+                    fs.write("\\n" + data)
+                print("Content appended successfully")
+            elif choice == 3:
+                with open(path, "w") as fs:
+                    data = input("What do you want to overwrite with: ")
+                    fs.write(data)
+                print("File overwritten successfully")
+            else:
+                print("Invalid option")
+        else:
+            print("Error: No such file exists")
+    except Exception as err:
+        print("An error occurred:", err)
+
+def deletefile():
+    try:
+        name = input("Please tell your file name: ")
+        path = Path(name)
+        if path.exists():
+            path.unlink()
+            print("File deleted successfully")
+        else:
+            print("Error: No such file exists")
+    except Exception as err:
+        print("An error occurred:", err)
+
+print("\\n===== FILE MANAGER =====")
+print("1. Create a file")
+print("2. Read a file")
+print("3. Update a file")
+print("4. Delete a file")
+
+a = int(input("\\nEnter your choice: "))
+
+if a == 1:
+    createfile()
+elif a == 2:
+    readfile()
+elif a == 3:
+    updatefile()
+elif a == 4:
+    deletefile()
+else:
+    print("Invalid choice")`;
+  navigator.clipboard.writeText(raw).then(() => {
+    document.getElementById('copy-label').textContent = 'Copied!';
+    setTimeout(() => document.getElementById('copy-label').textContent = 'Copy code', 2000);
+  });
+}
+</script>
+</body>
+</html>
